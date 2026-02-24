@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>IndexXZ Marketplace</title>
+		<style>
+			:root {
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+				color: #111827;
+			}
+
+			body {
+				margin: 0;
+				background: #f8fafc;
+			}
+
+			.header {
+				background: white;
+				border-bottom: 1px solid #e2e8f0;
+				position: sticky;
+				top: 0;
+				z-index: 5;
+			}
+
+			.header-inner {
+				max-width: 1100px;
+				margin: 0 auto;
+				padding: 14px 16px;
+				display: flex;
+				gap: 12px;
+				align-items: center;
+			}
+
+			.logo {
+				font-size: 1.4rem;
+				font-weight: 800;
+				color: #2563eb;
+				letter-spacing: 0.3px;
+				white-space: nowrap;
+			}
+
+			.search {
+				flex: 1;
+				display: flex;
+				gap: 8px;
+			}
+
+			.search input,
+			.search select {
+				padding: 10px 12px;
+				border: 1px solid #cbd5e1;
+				border-radius: 8px;
+				background: white;
+				font-size: 0.95rem;
+			}
+
+			.search input {
+				flex: 1;
+			}
+
+			.search button {
+				padding: 10px 16px;
+				border: 0;
+				border-radius: 8px;
+				background: #2563eb;
+				color: white;
+				font-weight: 600;
+				cursor: pointer;
+			}
+
+			.page {
+				max-width: 1100px;
+				margin: 20px auto;
+				padding: 0 16px 24px;
+			}
+
+			.top-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 14px;
+				gap: 12px;
+				flex-wrap: wrap;
+			}
+
+			.notice {
+				padding: 10px 12px;
+				border-radius: 8px;
+				background: #dcfce7;
+				color: #166534;
+				font-size: 0.9rem;
+			}
+
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+				gap: 14px;
+			}
+
+			.card {
+				background: white;
+				border: 1px solid #e2e8f0;
+				border-radius: 12px;
+				overflow: hidden;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.card img {
+				width: 100%;
+				height: 160px;
+				object-fit: cover;
+				background: #e2e8f0;
+			}
+
+			.body {
+				padding: 12px;
+				display: grid;
+				gap: 8px;
+			}
+
+			.title {
+				font-weight: 600;
+				line-height: 1.35;
+				min-height: 42px;
+			}
+
+			.meta {
+				font-size: 0.84rem;
+				color: #475569;
+			}
+
+			.price {
+				font-size: 1rem;
+				font-weight: 700;
+			}
+
+			.actions {
+				display: flex;
+				gap: 8px;
+			}
+
+			.actions button {
+				flex: 1;
+				padding: 9px 10px;
+				border: 0;
+				border-radius: 8px;
+				font-weight: 600;
+				cursor: pointer;
+			}
+
+			.bid {
+				background: #e2e8f0;
+				color: #0f172a;
+			}
+
+			.buy {
+				background: #f59e0b;
+				color: #111827;
+			}
+
+			.sold {
+				background: #fee2e2;
+				color: #991b1b;
+				padding: 6px 8px;
+				border-radius: 8px;
+				font-size: 0.85rem;
+				font-weight: 600;
+			}
+
+			.empty {
+				padding: 24px;
+				text-align: center;
+				background: white;
+				border: 1px dashed #cbd5e1;
+				border-radius: 12px;
+				color: #475569;
+			}
+
+			@media (max-width: 680px) {
+				.header-inner {
+					flex-direction: column;
+					align-items: stretch;
+				}
+
+				.logo {
+					text-align: center;
+				}
+
+				.search {
+					flex-wrap: wrap;
+				}
+
+				.search select,
+				.search button {
+					width: 100%;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div id="root"></div>
+
+		<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+		<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+		<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+		<script type="text/babel">
+			const CATEGORIES = ["All", "Electronics", "Fashion", "Gaming", "Collectibles", "Toys"];
+
+			async function apiRequest(url, options = {}) {
+				const response = await fetch(url, {
+					headers: { "Content-Type": "application/json" },
+					...options
+				});
+
+				const contentType = response.headers.get("content-type") || "";
+				if (!contentType.includes("application/json")) {
+					const text = await response.text();
+					const preview = text.slice(0, 60).replace(/\s+/g, " ").trim();
+					throw new Error(`API returned non-JSON (${response.status}): ${preview}`);
+				}
+
+				let data;
+				try {
+					data = await response.json();
+				} catch {
+					throw new Error(`Failed to parse API JSON (${response.status})`);
+				}
+
+				if (!response.ok) {
+					throw new Error(data.error || "Request failed");
+				}
+
+				return data;
+			}
+
+			function App() {
+				const [query, setQuery] = React.useState("");
+				const [category, setCategory] = React.useState("All");
+				const [listings, setListings] = React.useState([]);
+				const [loading, setLoading] = React.useState(true);
+				const [error, setError] = React.useState("");
+				const [notice, setNotice] = React.useState("");
+
+				async function loadListings(currentQuery = query, currentCategory = category) {
+					setLoading(true);
+					setError("");
+					try {
+						const params = new URLSearchParams();
+						if (currentQuery.trim()) {
+							params.set("q", currentQuery.trim());
+						}
+						if (currentCategory !== "All") {
+							params.set("category", currentCategory);
+						}
+
+						const result = await apiRequest(`/api/listings?${params.toString()}`);
+						setListings(result.listings);
+					} catch (requestError) {
+						setError(requestError.message);
+					} finally {
+						setLoading(false);
+					}
+				}
+
+				React.useEffect(() => {
+					loadListings();
+				}, []);
+
+				async function placeBid(listing) {
+					const entered = window.prompt(
+						`Enter your bid amount (current: $${listing.currentBid})`,
+						String(listing.currentBid + 10)
+					);
+
+					if (!entered) {
+						return;
+					}
+
+					try {
+						await apiRequest(`/api/listings/${listing.id}/bid`, {
+							method: "POST",
+							body: JSON.stringify({ amount: Number(entered) })
+						});
+						setNotice(`Bid placed on ${listing.title}`);
+						loadListings();
+					} catch (requestError) {
+						setError(requestError.message);
+					}
+				}
+
+				async function buyNow(listing) {
+					const confirmed = window.confirm(`Buy now for $${listing.buyNowPrice}?`);
+					if (!confirmed) {
+						return;
+					}
+
+					try {
+						await apiRequest(`/api/listings/${listing.id}/buy`, { method: "POST" });
+						setNotice(`You bought ${listing.title}`);
+						loadListings();
+					} catch (requestError) {
+						setError(requestError.message);
+					}
+				}
+
+				return (
+					<>
+						<header className="header">
+							<div className="header-inner">
+								<div className="logo">IndexXZ Marketplace</div>
+								<div className="search">
+									<input
+										value={query}
+										onChange={(event) => setQuery(event.target.value)}
+										placeholder="Search for anything"
+									/>
+									<select value={category} onChange={(event) => setCategory(event.target.value)}>
+										{CATEGORIES.map((item) => (
+											<option key={item} value={item}>
+												{item}
+											</option>
+										))}
+									</select>
+									<button onClick={() => loadListings(query, category)}>Search</button>
+								</div>
+							</div>
+						</header>
+
+						<main className="page">
+							<div className="top-row">
+								<div>
+									<strong>{listings.length}</strong> items found
+								</div>
+								{notice ? <div className="notice">{notice}</div> : null}
+							</div>
+
+							{error ? <div className="empty">{error}</div> : null}
+							{loading ? <div className="empty">Loading listings...</div> : null}
+
+							{!loading && !error && listings.length === 0 ? (
+								<div className="empty">No items matched your search.</div>
+							) : null}
+
+							{!loading && !error && listings.length > 0 ? (
+								<section className="grid">
+									{listings.map((listing) => (
+										<article className="card" key={listing.id}>
+											<img src={listing.image} alt={listing.title} />
+											<div className="body">
+												<div className="title">{listing.title}</div>
+												<div className="meta">
+													{listing.condition} • {listing.location} • {listing.timeLeft}
+												</div>
+												<div className="meta">{listing.shipping}</div>
+												<div className="price">Current bid: ${listing.currentBid}</div>
+												<div className="meta">Buy now: ${listing.buyNowPrice}</div>
+
+												{listing.sold ? (
+													<div className="sold">Sold</div>
+												) : (
+													<div className="actions">
+														<button className="bid" onClick={() => placeBid(listing)}>
+															Place bid
+														</button>
+														<button className="buy" onClick={() => buyNow(listing)}>
+															Buy now
+														</button>
+													</div>
+												)}
+											</div>
+										</article>
+									))}
+								</section>
+							) : null}
+						</main>
+					</>
+				);
+			}
+
+			const root = ReactDOM.createRoot(document.getElementById("root"));
+			root.render(<App />);
+		</script>
+	</body>
+</html>

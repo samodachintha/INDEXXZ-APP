@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IndexXZ — Buy & Sell Marketplace</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🛒</text></svg>" />
+    <style>
+      /* ── Reset & Base ── */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --blue: #2563eb; --blue-dark: #1d4ed8; --amber: #f59e0b; --amber-dark: #d97706;
+        --green: #16a34a; --red: #dc2626; --gray-50: #f8fafc; --gray-100: #f1f5f9;
+        --gray-200: #e2e8f0; --gray-300: #cbd5e1; --gray-500: #64748b; --gray-700: #334155;
+        --gray-900: #0f172a; --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,.08);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: var(--gray-900);
+      }
+      body { background: var(--gray-50); min-height: 100vh; }
+      a { color: var(--blue); text-decoration: none; }
+      img { display: block; max-width: 100%; }
+
+      /* ── Top banner ── */
+      .top-banner { background: var(--gray-900); color: white; text-align: center; padding: 6px; font-size: .82rem; }
+
+      /* ── Header ── */
+      .header { background: white; border-bottom: 1px solid var(--gray-200); position: sticky; top: 0; z-index: 10; }
+      .header-inner { max-width: 1200px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 14px; }
+      .logo { font-size: 1.5rem; font-weight: 800; color: var(--blue); cursor: pointer; white-space: nowrap; }
+      .search-bar { flex: 1; display: flex; gap: 0; }
+      .search-bar select { padding: 10px 10px; border: 1px solid var(--gray-300); border-right: 0; border-radius: var(--radius) 0 0 var(--radius); font-size: .9rem; background: var(--gray-100); }
+      .search-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--gray-300); font-size: .95rem; min-width: 100px; outline: none; }
+      .search-bar input:focus { border-color: var(--blue); }
+      .search-bar button { padding: 10px 20px; border: 0; background: var(--blue); color: white; font-weight: 600; border-radius: 0 var(--radius) var(--radius) 0; cursor: pointer; white-space: nowrap; }
+      .search-bar button:hover { background: var(--blue-dark); }
+      .nav-icons { display: flex; gap: 16px; align-items: center; }
+      .nav-btn { background: none; border: 0; cursor: pointer; font-size: .85rem; color: var(--gray-700); display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; }
+      .nav-btn .icon { font-size: 1.3rem; }
+      .badge { position: absolute; top: -4px; right: -6px; background: var(--red); color: white; font-size: .65rem; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+      /* ── Category bar ── */
+      .cat-bar { background: white; border-bottom: 1px solid var(--gray-200); overflow-x: auto; }
+      .cat-bar-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; gap: 4px; }
+      .cat-btn { padding: 10px 14px; background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer; font-size: .88rem; white-space: nowrap; color: var(--gray-700); }
+      .cat-btn:hover { color: var(--blue); }
+      .cat-btn.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+      /* ── Page container ── */
+      .page { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+      /* ── Toolbar ── */
+      .toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+      .toolbar-left { font-size: .92rem; color: var(--gray-500); }
+      .toolbar-left strong { color: var(--gray-900); }
+      .sort-select { padding: 8px 10px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: .88rem; }
+
+      /* ── Grid ── */
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+
+      /* ── Card ── */
+      .card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: box-shadow .15s; }
+      .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+      .card-img { width: 100%; height: 170px; object-fit: cover; background: var(--gray-100); }
+      .card-body { padding: 12px; display: grid; gap: 6px; }
+      .card-title { font-weight: 600; font-size: .95rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .card-price { font-size: 1.05rem; font-weight: 700; }
+      .card-buynow { font-size: .82rem; color: var(--gray-500); }
+      .card-meta { font-size: .8rem; color: var(--gray-500); }
+      .card-shipping { font-size: .8rem; color: var(--green); font-weight: 500; }
+      .card-actions { display: flex; gap: 6px; margin-top: 4px; }
+      .btn { padding: 8px 12px; border: 0; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: .85rem; transition: filter .15s; }
+      .btn:hover { filter: brightness(.92); }
+      .btn-bid { background: var(--gray-200); color: var(--gray-900); flex: 1; }
+      .btn-buy { background: var(--amber); color: var(--gray-900); flex: 1; }
+      .btn-buy:hover { background: var(--amber-dark); }
+      .btn-primary { background: var(--blue); color: white; }
+      .btn-outline { background: white; border: 1px solid var(--gray-300); color: var(--gray-700); }
+      .card-sold { background: #fee2e2; color: var(--red); padding: 6px 8px; border-radius: 8px; font-size: .82rem; font-weight: 600; text-align: center; }
+      .card-watchers { font-size: .78rem; color: var(--gray-500); }
+
+      /* ── Detail view ── */
+      .detail { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; background: white; padding: 24px; border-radius: var(--radius); border: 1px solid var(--gray-200); }
+      .detail-img { width: 100%; border-radius: var(--radius); }
+      .detail-info { display: grid; gap: 12px; align-content: start; }
+      .detail-title { font-size: 1.4rem; font-weight: 700; }
+      .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--gray-100); font-size: .92rem; }
+      .detail-label { color: var(--gray-500); }
+      .detail-value { font-weight: 600; }
+      .detail-price { font-size: 1.6rem; font-weight: 800; color: var(--blue); }
+      .detail-actions { display: flex; gap: 10px; margin-top: 8px; }
+      .detail-actions .btn { padding: 12px 20px; font-size: .95rem; }
+      .detail-seller { padding: 12px; background: var(--gray-50); border-radius: var(--radius); font-size: .9rem; }
+      .back-btn { background: none; border: 0; cursor: pointer; color: var(--blue); font-size: .9rem; margin-bottom: 12px; }
+
+      /* ── Cart / Watchlist panel ── */
+      .panel { background: white; border-radius: var(--radius); border: 1px solid var(--gray-200); padding: 20px; }
+      .panel-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 14px; }
+      .panel-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); align-items: center; }
+      .panel-item img { width: 70px; height: 50px; object-fit: cover; border-radius: 6px; }
+      .panel-item-info { flex: 1; }
+      .panel-item-title { font-weight: 600; font-size: .9rem; }
+      .panel-item-price { font-size: .85rem; color: var(--gray-500); }
+      .panel-remove { background: none; border: 0; color: var(--red); cursor: pointer; font-size: .85rem; }
+      .panel-total { display: flex; justify-content: space-between; padding: 14px 0 0; font-size: 1.05rem; font-weight: 700; border-top: 2px solid var(--gray-200); margin-top: 10px; }
+      .panel-empty { text-align: center; padding: 30px; color: var(--gray-500); }
+
+      /* ── Toast ── */
+      .toast { position: fixed; bottom: 20px; right: 20px; background: var(--gray-900); color: white; padding: 12px 20px; border-radius: var(--radius); font-size: .9rem; z-index: 100; animation: slideIn .3s ease; }
+      @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+      /* ── Footer ── */
+      .footer { background: var(--gray-900); color: var(--gray-300); padding: 30px 16px; margin-top: 40px; }
+      .footer-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px; }
+      .footer h4 { color: white; margin-bottom: 10px; font-size: .95rem; }
+      .footer p, .footer a { font-size: .85rem; color: var(--gray-300); line-height: 1.8; }
+      .footer a:hover { color: white; }
+      .footer-bottom { max-width: 1200px; margin: 16px auto 0; padding-top: 16px; border-top: 1px solid var(--gray-700); font-size: .8rem; text-align: center; }
+
+      /* ── Responsive ── */
+      @media (max-width: 768px) {
+        .header-inner { flex-wrap: wrap; }
+        .search-bar { order: 3; flex-basis: 100%; }
+        .detail { grid-template-columns: 1fr; }
+        .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        .card-img { height: 130px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel">
+      const { useState, useEffect, useCallback } = React;
+
+      const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Gaming', 'Collectibles', 'Toys'];
+      const SORTS = [
+        { value: 'newest', label: 'Newest first' },
+        { value: 'ending', label: 'Ending soonest' },
+        { value: 'price-asc', label: 'Price: Low to High' },
+        { value: 'price-desc', label: 'Price: High to Low' },
+      ];
+
+      /* ── API helper ── */
+      async function api(url, options = {}) {
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) throw new Error('Server returned non-JSON response');
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Request failed');
+        return json;
+      }
+
+      /* ── Toast ── */
+      function Toast({ message }) {
+        if (!message) return null;
+        return <div className="toast">{message}</div>;
+      }
+
+      /* ── Listing Card ── */
+      function ListingCard({ item, onView, onBid, onBuy }) {
+        return (
+          <article className="card" onClick={() => onView(item)}>
+            <img className="card-img" src={item.image} alt={item.title} />
+            <div className="card-body">
+              <div className="card-title">{item.title}</div>
+              <div className="card-price">${item.currentBid.toLocaleString()}</div>
+              <div className="card-buynow">Buy It Now: ${item.buyNowPrice.toLocaleString()}</div>
+              <div className="card-meta">{item.bids} bids · {item.timeLeft} left</div>
+              <div className="card-shipping">{item.shipping}</div>
+              <div className="card-watchers">👁 {item.watchers} watching</div>
+              {item.sold ? (
+                <div className="card-sold">SOLD</div>
+              ) : (
+                <div className="card-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="btn btn-bid" onClick={() => onBid(item)}>Place Bid</button>
+                  <button className="btn btn-buy" onClick={() => onBuy(item)}>Buy Now</button>
+                </div>
+              )}
+            </div>
+          </article>
+        );
+      }
+
+      /* ── Detail Page ── */
+      function DetailView({ item, onBack, onBid, onBuy, onWatch }) {
+        if (!item) return null;
+        return (
+          <div className="page">
+            <button className="back-btn" onClick={onBack}>← Back to listings</button>
+            <div className="detail">
+              <img className="detail-img" src={item.image} alt={item.title} />
+              <div className="detail-info">
+                <div className="detail-title">{item.title}</div>
+                <div className="detail-price">${item.currentBid.toLocaleString()}</div>
+                <p style={{ fontSize: '.92rem', color: '#64748b', lineHeight: 1.6 }}>{item.description}</p>
+                <div className="detail-row"><span className="detail-label">Condition</span><span className="detail-value">{item.condition}</span></div>
+                <div className="detail-row"><span className="detail-label">Category</span><span className="detail-value">{item.category}</span></div>
+                <div className="detail-row"><span className="detail-label">Location</span><span className="detail-value">{item.location}</span></div>
+                <div className="detail-row"><span className="detail-label">Shipping</span><span className="detail-value">{item.shipping}</span></div>
+                <div className="detail-row"><span className="detail-label">Time Left</span><span className="detail-value" style={{ color: '#dc2626' }}>{item.timeLeft}</span></div>
+                <div className="detail-row"><span className="detail-label">Bids</span><span className="detail-value">{item.bids}</span></div>
+                <div className="detail-row"><span className="detail-label">Buy Now</span><span className="detail-value">${item.buyNowPrice.toLocaleString()}</span></div>
+                <div className="detail-seller">
+                  <strong>Seller:</strong> {item.seller} · 📍 {item.location}
+                </div>
+                {item.sold ? (
+                  <div className="card-sold" style={{ padding: 12, textAlign: 'center', fontSize: '1rem' }}>This item has been sold</div>
+                ) : (
+                  <div className="detail-actions">
+                    <button className="btn btn-bid" onClick={() => onBid(item)}>Place Bid</button>
+                    <button className="btn btn-buy" onClick={() => onBuy(item)}>Buy Now — ${item.buyNowPrice}</button>
+                    <button className="btn btn-outline" onClick={() => onWatch(item)}>♡ Watch</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      /* ── Panel (Cart / Watchlist) ── */
+      function Panel({ title, items, onRemove, onClose, showTotal }) {
+        const total = items.reduce((s, i) => s + i.buyNowPrice, 0);
+        return (
+          <div className="page">
+            <button className="back-btn" onClick={onClose}>← Back</button>
+            <div className="panel">
+              <div className="panel-title">{title} ({items.length})</div>
+              {items.length === 0 ? (
+                <div className="panel-empty">Nothing here yet.</div>
+              ) : (
+                <>
+                  {items.map((item) => (
+                    <div className="panel-item" key={item.id}>
+                      <img src={item.image} alt={item.title} />
+                      <div className="panel-item-info">
+                        <div className="panel-item-title">{item.title}</div>
+                        <div className="panel-item-price">${item.buyNowPrice.toLocaleString()}</div>
+                      </div>
+                      <button className="panel-remove" onClick={() => onRemove(item.id)}>✕ Remove</button>
+                    </div>
+                  ))}
+                  {showTotal && <div className="panel-total"><span>Total</span><span>${total.toLocaleString()}</span></div>}
+                  {showTotal && items.length > 0 && (
+                    <button className="btn btn-primary" style={{ width: '100%', marginTop: 12, padding: 14, fontSize: '1rem' }}>
+                      Proceed to Checkout
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      /* ── App ── */
+      function App() {
+        const [page, setPage] = useState('home');
+        const [listings, setListings] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [query, setQuery] = useState('');
+        const [category, setCategory] = useState('All');
+        const [sort, setSort] = useState('newest');
+        const [selectedItem, setSelectedItem] = useState(null);
+        const [cart, setCart] = useState([]);
+        const [watchlist, setWatchlist] = useState([]);
+        const [toast, setToast] = useState('');
+
+        function showToast(msg) {
+          setToast(msg);
+          setTimeout(() => setToast(''), 2500);
+        }
+
+        const loadListings = useCallback(async (q = query, cat = category, s = sort) => {
+          setLoading(true);
+          try {
+            const params = new URLSearchParams();
+            if (q.trim()) params.set('q', q.trim());
+            if (cat !== 'All') params.set('category', cat);
+            params.set('sort', s);
+            const result = await api(`/api/listings?${params}`);
+            setListings(result.data.listings);
+          } catch (err) {
+            showToast(err.message);
+          } finally {
+            setLoading(false);
+          }
+        }, [query, category, sort]);
+
+        useEffect(() => { loadListings(); }, []);
+
+        function handleSearch() { loadListings(query, category, sort); }
+        function handleCategoryClick(cat) { setCategory(cat); loadListings(query, cat, sort); }
+        function handleSortChange(e) { const s = e.target.value; setSort(s); loadListings(query, category, s); }
+
+        function viewItem(item) { setSelectedItem(item); setPage('detail'); window.scrollTo(0, 0); }
+
+        async function placeBid(item) {
+          const entered = window.prompt(`Enter bid (current: $${item.currentBid})`, String(item.currentBid + 10));
+          if (!entered) return;
+          try {
+            await api(`/api/listings/${item.id}/bid`, { method: 'POST', body: JSON.stringify({ amount: Number(entered) }) });
+            showToast(`Bid of $${entered} placed!`);
+            loadListings();
+            if (page === 'detail') {
+              const res = await api(`/api/listings/${item.id}`);
+              setSelectedItem(res.data);
+            }
+          } catch (err) { showToast(err.message); }
+        }
+
+        async function buyNow(item) {
+          if (!window.confirm(`Buy "${item.title}" for $${item.buyNowPrice}?`)) return;
+          try {
+            await api(`/api/listings/${item.id}/buy`, { method: 'POST' });
+            setCart((prev) => [...prev, item]);
+            showToast(`Purchased ${item.title}!`);
+            loadListings();
+            if (page === 'detail') {
+              const res = await api(`/api/listings/${item.id}`);
+              setSelectedItem(res.data);
+            }
+          } catch (err) { showToast(err.message); }
+        }
+
+        async function addToWatchlist(item) {
+          if (watchlist.find((w) => w.id === item.id)) { showToast('Already in watchlist'); return; }
+          try {
+            await api(`/api/listings/${item.id}/watch`, { method: 'POST' });
+            setWatchlist((prev) => [...prev, item]);
+            showToast(`${item.title} added to watchlist`);
+          } catch (err) { showToast(err.message); }
+        }
+
+        return (
+          <>
+            {/* Top banner */}
+            <div className="top-banner">Free shipping on orders over $50 · Buyer protection on every purchase</div>
+
+            {/* Header */}
+            <header className="header">
+              <div className="header-inner">
+                <div className="logo" onClick={() => { setPage('home'); setSelectedItem(null); }}>IndexXZ</div>
+                <div className="search-bar">
+                  <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="Search for anything"
+                  />
+                  <button onClick={handleSearch}>Search</button>
+                </div>
+                <div className="nav-icons">
+                  <button className="nav-btn" onClick={() => setPage('watchlist')}>
+                    <span className="icon">♡</span>
+                    <span>Watchlist</span>
+                    {watchlist.length > 0 && <span className="badge">{watchlist.length}</span>}
+                  </button>
+                  <button className="nav-btn" onClick={() => setPage('cart')}>
+                    <span className="icon">🛒</span>
+                    <span>Cart</span>
+                    {cart.length > 0 && <span className="badge">{cart.length}</span>}
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            {/* Category bar – only on home */}
+            {page === 'home' && (
+              <nav className="cat-bar">
+                <div className="cat-bar-inner">
+                  {CATEGORIES.map((c) => (
+                    <button key={c} className={`cat-btn ${c === category ? 'active' : ''}`} onClick={() => handleCategoryClick(c)}>{c}</button>
+                  ))}
+                </div>
+              </nav>
+            )}
+
+            {/* Pages */}
+            {page === 'home' && (
+              <div className="page">
+                <div className="toolbar">
+                  <div className="toolbar-left"><strong>{listings.length}</strong> results {category !== 'All' ? `in ${category}` : ''}{query ? ` for "${query}"` : ''}</div>
+                  <select className="sort-select" value={sort} onChange={handleSortChange}>
+                    {SORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                </div>
+                {loading ? (
+                  <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Loading listings...</div>
+                ) : listings.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>No items found. Try a different search.</div>
+                ) : (
+                  <section className="grid">
+                    {listings.map((item) => (
+                      <ListingCard key={item.id} item={item} onView={viewItem} onBid={placeBid} onBuy={buyNow} />
+                    ))}
+                  </section>
+                )}
+              </div>
+            )}
+
+            {page === 'detail' && (
+              <DetailView
+                item={selectedItem}
+                onBack={() => { setPage('home'); setSelectedItem(null); }}
+                onBid={placeBid}
+                onBuy={buyNow}
+                onWatch={addToWatchlist}
+              />
+            )}
+
+            {page === 'watchlist' && (
+              <Panel
+                title="My Watchlist"
+                items={watchlist}
+                onRemove={(id) => setWatchlist((prev) => prev.filter((i) => i.id !== id))}
+                onClose={() => setPage('home')}
+                showTotal={false}
+              />
+            )}
+
+            {page === 'cart' && (
+              <Panel
+                title="Shopping Cart"
+                items={cart}
+                onRemove={(id) => setCart((prev) => prev.filter((i) => i.id !== id))}
+                onClose={() => setPage('home')}
+                showTotal={true}
+              />
+            )}
+
+            {/* Footer */}
+            <footer className="footer">
+              <div className="footer-inner">
+                <div>
+                  <h4>Buy</h4>
+                  <p><a href="#">Registration</a></p>
+                  <p><a href="#">Bidding & buying help</a></p>
+                  <p><a href="#">Stores</a></p>
+                </div>
+                <div>
+                  <h4>Sell</h4>
+                  <p><a href="#">Start selling</a></p>
+                  <p><a href="#">Seller center</a></p>
+                  <p><a href="#">Fees & invoices</a></p>
+                </div>
+                <div>
+                  <h4>Help</h4>
+                  <p><a href="#">Customer service</a></p>
+                  <p><a href="#">Returns</a></p>
+                  <p><a href="#">Contact us</a></p>
+                </div>
+                <div>
+                  <h4>About</h4>
+                  <p><a href="#">Company info</a></p>
+                  <p><a href="#">Careers</a></p>
+                  <p><a href="#">Policies</a></p>
+                </div>
+              </div>
+              <div className="footer-bottom">© 2026 IndexXZ Inc. All Rights Reserved.</div>
+            </footer>
+
+            <Toast message={toast} />
+          </>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>
